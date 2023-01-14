@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гостевая книга</title>
+
+    <style>
+        .front-version {
+            height: 100px;
+            overflow: hidden;
+        }
+
+        .front-version embed {
+            overflow: hidden!important;
+            height: 40px
+        }
+
+        .container {
+            margin: 30px 0;
+        }
+
+        .container > div {
+            padding: 15px;
+            border: 1px dashed gray;
+        }
+
+        .send-note {
+            background: rgb(222, 195, 195);
+            padding: 15px;
+        }
+
+        .send-note div {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    
+    <p>Версия фронтенда: <i class="front-version"><embed src="version.txt" /></i></p>
+    <p>Версия бекенда: <i class="backend-version">0</i></p>
+    <p>Имя реплики: <i class="replica-name">Default Name</i></p>
+
+    <h1>Гостевая книга</h1>
+    <div class="container">
+    </div>
+
+    <form class="send-note">
+        <div>
+            <label>
+                Имя:
+                <input type="text" name="name" class="send-note-name">
+            </label>
+        </div>
+        <div>
+            <label>
+                Отзыв:
+                <textarea name="content" id="" cols="30" rows="10" class="send-note-content"></textarea>
+            </label>
+        </div>
+        <button>Добавить отзыв</button>
+    </form>
+
+    <script>
+        (function(){
+            var apiUrl = 'http://localhost:5000';
+            var container = document.querySelector('.container');
+            var frontVersion = document.querySelector('.front-version');
+            var backendVersion = document.querySelector('.backend-version');
+            var replicaName = document.querySelector('.replica-name');
+            var sendForm = document.querySelector('.send-note');
+            var sendNameEl = document.querySelector('.send-note-name');
+            var sendContentEl = document.querySelector('.send-note-content');
+
+            fetch(`${apiUrl}/v`, {method: 'GET'})
+                .then(data => data.json())
+                .then(backendInfo => {
+                    backendVersion.textContent = backendInfo['version'];
+                    replicaName.textContent = backendInfo['name'];
+                });
+
+            fetch(`${apiUrl}/notes`, {method: 'GET'})
+                .then(data => data.json())
+                .then(notes => {
+                    notes.forEach(note => {
+                        var itemContainer = document.createElement('div');
+                        var nameEl = document.createElement('h3');
+                        var contentEl = document.createElement('p');
+
+                        nameEl.textContent = note['name'];
+                        contentEl.textContent = note['content'];
+                        itemContainer.appendChild(nameEl);
+                        itemContainer.appendChild(contentEl);
+
+                        container.appendChild(itemContainer);
+                    });
+
+                });
+            
+            sendForm.onsubmit = function(e){
+                e.preventDefault();
+                var name = sendNameEl.value;
+                var content = sendContentEl.value;
+
+                if (!name || !content){
+                    return null;
+                }
+
+                fetch(`${apiUrl}/notes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({name: name, content: content})
+                })
+                .then(_ => {
+                    var itemContainer = document.createElement('div');
+                    var nameEl = document.createElement('h3');
+                    var contentEl = document.createElement('p');
+
+                    nameEl.textContent = name;
+                    contentEl.textContent = content;
+                    itemContainer.appendChild(nameEl);
+                    itemContainer.appendChild(contentEl);
+
+                    container.appendChild(itemContainer);
+
+                    sendNameEl.value = "";
+                    sendContentEl.value ="";
+                }); 
+            };
+            
+        })();
+    </script>
+</body>
+</html>

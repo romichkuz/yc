@@ -1,0 +1,4 @@
+Flask
+ydb[yc]
+python-dotenv
+flask-cors
